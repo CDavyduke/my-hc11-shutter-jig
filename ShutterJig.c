@@ -98,7 +98,7 @@ unsigned short close_shutter;
 unsigned short on_count;
 unsigned short off_count;
 
-// To be called before main.
+int __attribute__((noreturn)) main (void);
 void _start (void);
 
 // LCD function prototypes.
@@ -111,9 +111,11 @@ void LCD_Initialize(void);
 // Function prototype for the button press routine.
 unsigned short ButtonPressed(void);
 
+// To be called before main();
 void _start()
 {
   asm ("lds #_stack");
+  set_bus_expanded ();
   main ();
 }
 

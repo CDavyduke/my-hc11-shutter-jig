@@ -1,30 +1,54 @@
 # ShutterJig Makefile
-# Author:			Corey Davyduke
-# Created:			2012-06-14
-# Modified:			2012-06-18
-# Description:		This is the Makefile for my Shutter Jig project.
+# Author:       Corey Davyduke
+# Created:      2012-06-14
+# Modified:     2012-06-18
+# Compiler:     GNU GCC
+# Description:  This is the Makefile for my Shutter Jig project.
 
-# Use the cme11 board configuration files (compilation flags
-# and specific includes).
-override TARGET_BOARD=m68hc11-corey
+# Host generic commands
+RM=rm -f
+INSTALL=cp
 
-# Makefile is now dependent on an environment variable being set
-# for GEL_BASEDIR
-include $(GEL_BASEDIR)/config/make.defs
+# Device specific suffix and GCC compiler tool affixes
+DEVC_PREFIX=m6811-elf-
+CC=$(DEVC_PREFIX)gcc
+SIZE=$(DEVC_PREFIX)size
+OBJCOPY=$(DEVC_PREFIX)objcopy
 
+# Libraries
+LIBS=lib/libc.a lib/libbsp.a
+
+# CPP flags passed during a compilation (include paths)
+CPPFLAGS=-I. -I./include
+
+# C flags used by default to compile the program
+CFLAGS=-m68hc11 -mshort -Wall -Wmissing-prototypes -g -Os
+
+# LDFLAGS used by default to link the program
+LDFLAGS=-m68hc11 -mshort -Wl,-m,m68hc11elfb -L.
+
+# Options to creates the .s19 or .b files from the elf
+OBJCOPY_FLAGS=--only-section=.text --only-section=.rodata \
+            --only-section=.vectors --only-section=.data
+
+# Rule to create an S19 file from an ELF file.
+.SUFFIXES: .elf .s19
+.elf.s19:
+	$(OBJCOPY) --output-target=srec $(OBJCOPY_FLAGS) $< $*.s19
+
+# Project name (suffix to many other parts)
 PROJECT=ShutterJig
 
+# C Source file
 CSRCS=$(PROJECT).c
 
 OBJS=$(CSRCS:.c=.o)
-
 PROGS=$(PROJECT).elf
 
 all::	$(PROGS) $(PROJECT).s19
 
 $(PROJECT).elf:	$(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(GEL_LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
-install::	$(PROGS)
-	$(INSTALL) $(PROGS) $(GEL_INSTALL_BIN)
-
+clean::
+	$(RM) *.o *.elf *.s19

@@ -98,8 +98,8 @@ unsigned short close_shutter;
 unsigned short on_count;
 unsigned short off_count;
 
-int __attribute__((noreturn)) main (void);
-void _start (void);
+//int __attribute__((noreturn)) main (void);
+//void _start (void);
 
 // LCD function prototypes.
 void LCD_Command(unsigned char cval);
@@ -112,12 +112,14 @@ void LCD_Initialize(void);
 unsigned short ButtonPressed(void);
 
 // To be called before main();
+/*
 void _start()
 {
   asm ("lds #_stack");
   set_bus_expanded ();
   main ();
 }
+*/
 
 // Timer interrupt handler.
 void __attribute__((interrupt)) timer_interrupt(void)

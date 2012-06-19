@@ -1,0 +1,1749 @@
+
+ShutterJig.o:     file format elf32-m68hc11
+
+Disassembly of section .text:
+
+00000000 <_start>:
+unsigned short ButtonPressed(void);
+
+// To be called before main();
+void _start()
+{
+   0:	de 00       	ldx	*0 <_start>
+   2:	3c          	pshx
+   3:	9f 00       	sts	*0 <_start>
+
+00000005 <.LM2>:
+  asm ("lds #_stack");
+   5:	8e 00 00    	lds	#0 <_start>
+
+00000008 <.LM3>:
+/* Set the board in the expanded mode to get access to external bus.  */
+extern inline void
+set_bus_expanded (void)
+{
+  _io_ports[M6811_HPRIO] |= M6811_MDA;
+   8:	f6 00 3c    	ldab	3c <.LM11+0x3>
+
+0000000b <.LBB2>:
+   b:	ca 20       	orab	#32
+   d:	f7 00 3c    	stab	3c <.LM11+0x3>
+
+00000010 <.LBE2>:
+  set_bus_expanded ();
+  main ();
+  10:	bd 00 00    	jsr	0 <_start>
+
+00000013 <timer_interrupt>:
+}
+
+// Timer interrupt handler.
+void __attribute__((interrupt)) timer_interrupt(void)
+{
+  13:	de 00       	ldx	*0 <_start>
+  15:	3c          	pshx
+  16:	de 00       	ldx	*0 <_start>
+  18:	3c          	pshx
+  19:	de 00       	ldx	*0 <_start>
+  1b:	3c          	pshx
+  1c:	de 00       	ldx	*0 <_start>
+  1e:	3c          	pshx
+  1f:	9f 00       	sts	*0 <_start>
+
+00000021 <.LM8>:
+  timer_count++;
+  21:	fc 00 02    	ldd	2 <_start+0x2>
+  24:	c3 00 01    	addd	#1 <_start+0x1>
+  27:	fd 00 02    	std	2 <_start+0x2>
+  2a:	24 08       	bcc	34 <.LM10>
+  2c:	7c 00 01    	inc	1 <_start+0x1>
+  2f:	26 03       	bne	34 <.LM10>
+  31:	7c 00 00    	inc	0 <_start>
+
+00000034 <.LM10>:
+/* Acknowledge the timer interrupt.  */
+extern inline void
+timer_acknowledge (void)
+{
+  _io_ports[M6811_TFLG2] = M6811_RTIF;
+  34:	c6 40       	ldab	#64
+
+00000036 <.LBB3>:
+  36:	f7 00 25    	stab	25 <.LM8+0x4>
+
+00000039 <.LM11>:
+  timer_acknowledge();
+}
+  39:	38          	pulx
+  3a:	df 00       	stx	*0 <_start>
+  3c:	38          	pulx
+  3d:	df 00       	stx	*0 <_start>
+  3f:	38          	pulx
+  40:	df 00       	stx	*0 <_start>
+  42:	38          	pulx
+  43:	df 00       	stx	*0 <_start>
+  45:	3b          	rti
+
+00000046 <timer_seconds>:
+
+// Returns the current number of ticks that ellapsed since we started.
+static inline unsigned long timer_get_ticks()
+{
+  unsigned long t;
+
+  lock();
+  t = timer_count;
+  unlock();
+  return t;
+}
+
+// Translate the number of ticks into some seconds.
+static unsigned long timer_seconds(unsigned long ntime)
+{
+  46:	18 de 00    	ldy	*0 <_start>
+  49:	18 3c       	pshy
+  4b:	9f 00       	sts	*0 <_start>
+
+0000004d <.LM13>:
+  unsigned long n;
+
+  /* To compute SECS = NTIME * TIMER_DIV / M6811_CPU_E_CLOCK accurately,
+     use Bezous relation (A = BQ + R).  */
+  n = ntime * (TIMER_DIV / M6811_CPU_E_CLOCK);
+  n += (ntime * (TIMER_DIV % M6811_CPU_E_CLOCK)) / M6811_CPU_E_CLOCK;
+  4d:	18 ce 00 0d 	ldy	#d <.LBB2+0x2>
+  51:	bd 00 00    	jsr	0 <_start>
+  54:	18 ce 84 80 	ldy	#8480 <.LFE65+0x7d8c>
+  58:	18 3c       	pshy
+  5a:	18 ce 00 1e 	ldy	#1e <timer_interrupt+0xb>
+  5e:	18 3c       	pshy
+  60:	bd 00 00    	jsr	0 <_start>
+  63:	18 38       	puly
+  65:	18 38       	puly
+
+00000067 <.LM14>:
+  n += boot_time;
+  67:	f3 00 02    	addd	2 <_start+0x2>
+  6a:	8f          	xgdx
+  6b:	f9 00 01    	adcb	1 <_start+0x1>
+  6e:	b9 00 00    	adca	0 <_start>
+  71:	8f          	xgdx
+
+00000072 <.LM15>:
+  return n;
+}
+  72:	18 38       	puly
+  74:	18 df 00    	sty	*0 <_start>
+  77:	39          	rts
+
+00000078 <timer_microseconds>:
+
+// Translate the number of ticks into some microseconds.
+static unsigned long timer_microseconds(unsigned long ntime)
+{
+  78:	18 de 00    	ldy	*0 <_start>
+  7b:	18 3c       	pshy
+  7d:	9f 00       	sts	*0 <_start>
+
+0000007f <.LM17>:
+  unsigned long n;
+
+  /* To compute SECS = NTIME * TIMER_DIV / M6811_CPU_E_CLOCK accurately,
+     use Bezous relation (A = BQ + R).  */
+  n = ntime * (TIMER_DIV / 2);
+  7f:	18 ce 00 0c 	ldy	#c <.LBB2+0x1>
+  83:	bd 00 00    	jsr	0 <_start>
+
+00000086 <.LM18>:
+  n += (ntime * (TIMER_DIV % 2)) / 2;
+  n = n % 1000000L;
+  86:	18 ce 42 40 	ldy	#4240 <.LFE65+0x3b4c>
+  8a:	18 3c       	pshy
+  8c:	18 ce 00 0f 	ldy	#f <.LBB2+0x4>
+  90:	18 3c       	pshy
+  92:	bd 00 00    	jsr	0 <_start>
+  95:	18 38       	puly
+  97:	18 38       	puly
+
+00000099 <.LM19>:
+  return n;
+}
+  99:	18 38       	puly
+  9b:	18 df 00    	sty	*0 <_start>
+  9e:	39          	rts
+
+0000009f <get_value>:
+
+/* Translate the string pointed to by *p into a number.
+   Update *p to point to the end of that number.  */
+static unsigned short get_value(char **p)
+{
+  9f:	de 00       	ldx	*0 <_start>
+  a1:	3c          	pshx
+  a2:	3c          	pshx
+  a3:	9f 00       	sts	*0 <_start>
+  a5:	de 00       	ldx	*0 <_start>
+  a7:	ed 01       	std	1,x
+
+000000a9 <.LM21>:
+  char *q;
+  unsigned short val;
+
+  q = *p;
+  a9:	18 8f       	xgdy
+  ab:	cd ee 00    	ldx	0,y
+
+000000ae <.LM22>:
+  while(*q == ' ')
+  ae:	e6 00       	ldab	0,x
+  b0:	c1 20       	cmpb	#32
+  b2:	26 07       	bne	bb <.LM24>
+
+000000b4 <.LM23>:
+    q++;
+  b4:	08          	inx
+  b5:	e6 00       	ldab	0,x
+  b7:	c1 20       	cmpb	#32
+  b9:	27 f9       	beq	b4 <.LM23>
+
+000000bb <.LM24>:
+
+  val = 0;
+  bb:	18 ce 00 00 	ldy	#0 <_start>
+
+000000bf <.LM25>:
+  while(1)
+  {
+    char c = *q++;
+  bf:	18 df 00    	sty	*0 <_start>
+
+000000c2 <.LBB7>:
+  c2:	18 8f       	xgdy
+  c4:	e6 00       	ldab	0,x
+  c6:	18 8f       	xgdy
+  c8:	08          	inx
+
+000000c9 <.LM26>:
+    if(c < '0' || c > '9')
+  c9:	18 df 00    	sty	*0 <_start>
+  cc:	d6 01       	ldab	*1 <_start+0x1>
+  ce:	cb d0       	addb	#208
+  d0:	18 df 00    	sty	*0 <_start>
+  d3:	18 de 00    	ldy	*0 <_start>
+  d6:	c1 09       	cmpb	#9
+  d8:	22 20       	bhi	fa <.LM28>
+
+000000da <.LM27>:
+      break;
+    val = (val * 10) + (c - '0');
+  da:	18 df 00    	sty	*0 <_start>
+  dd:	dc 00       	ldd	*0 <_start>
+  df:	05          	asld
+  e0:	05          	asld
+  e1:	18 df 00    	sty	*0 <_start>
+  e4:	d3 00       	addd	*0 <_start>
+  e6:	05          	asld
+  e7:	df 00       	stx	*0 <_start>
+  e9:	de 00       	ldx	*0 <_start>
+  eb:	df 00       	stx	*0 <_start>
+  ed:	db 01       	addb	*1 <_start+0x1>
+  ef:	89 00       	adca	#0
+  f1:	de 00       	ldx	*0 <_start>
+  f3:	c3 ff d0    	addd	#ffd0 <.LFE65+0xf8dc>
+  f6:	18 8f       	xgdy
+
+000000f8 <.LBE7>:
+  f8:	20 c5       	bra	bf <.LM25>
+
+000000fa <.LM28>:
+  }
+  q--;
+  fa:	09          	dex
+
+000000fb <.LM29>:
+  *p = q;
+  fb:	18 df 00    	sty	*0 <_start>
+  fe:	18 de 00    	ldy	*0 <_start>
+ 101:	18 ee 01    	ldy	1,y
+ 104:	cd ef 00    	stx	0,y
+
+00000107 <.LM30>:
+  return val;
+}
+ 107:	dc 00       	ldd	*0 <_start>
+ 109:	38          	pulx
+ 10a:	38          	pulx
+ 10b:	df 00       	stx	*0 <_start>
+ 10d:	39          	rts
+
+0000010e <get_time>:
+
+// Ask for the boot time.
+static void get_time()
+{
+ 10e:	de 00       	ldx	*0 <_start>
+ 110:	3c          	pshx
+ 111:	30          	tsx
+ 112:	8f          	xgdx
+ 113:	c3 ff d8    	addd	#ffd8 <.LFE65+0xf8e4>
+ 116:	8f          	xgdx
+ 117:	35          	txs
+ 118:	9f 00       	sts	*0 <_start>
+ 11a:	de 00       	ldx	*0 <_start>
+ 11c:	3c          	pshx
+ 11d:	de 00       	ldx	*0 <_start>
+ 11f:	3c          	pshx
+ 120:	de 00       	ldx	*0 <_start>
+ 122:	3c          	pshx
+
+00000123 <.LM32>:
+  char buf[32];
+  int pos;
+  char c;
+  unsigned short hours, mins, secs;
+  char *p;
+  int error = 0;
+ 123:	7f 00 01    	clr	1 <_start+0x1>
+ 126:	7f 00 00    	clr	0 <_start>
+
+00000129 <.LBB9>:
+#endif
+
+inline static void print (const char* msg)
+{
+  serial_print (msg);
+ 129:	cc 00 00    	ldd	#0 <_start>
+ 12c:	bd 00 00    	jsr	0 <_start>
+
+0000012f <.LM34>:
+
+  print("\r\nBoot time ? ");
+  pos = 0;
+ 12f:	dc 00       	ldd	*0 <_start>
+ 131:	de 00       	ldx	*0 <_start>
+
+00000133 <.LBE9>:
+ 133:	ed 23       	std	35,x
+
+00000135 <.LBB10>:
+}
+
+extern inline void
+cop_optional_reset (void)
+{
+ 135:	f6 00 2e    	ldab	2e <.LM8+0xd>
+ 138:	c5 20       	bitb	#32
+ 13a:	27 f9       	beq	135 <.LBB10>
+
+0000013c <.LM37>:
+extern inline unsigned char
+serial_recv (void)
+{
+  while (!(_io_ports[M6811_SCSR] & M6811_RDRF))
+    cop_optional_reset ();
+ 13c:	f6 00 2f    	ldab	2f <.LM8+0xe>
+ 13f:	18 de 00    	ldy	*0 <_start>
+ 142:	18 6f 27    	clr	39,y
+ 145:	18 e7 28    	stab	40,y
+
+00000148 <.LBE10>:
+ 148:	18 e6 28    	ldab	40,y
+
+0000014b <.LM39>:
+  while(1)
+  {
+    c = serial_recv();
+    if(c == '\r' || c == '\n')
+ 14b:	c1 0d       	cmpb	#13
+ 14d:	27 5f       	beq	1ae <.LBB13>
+ 14f:	c1 0a       	cmpb	#10
+ 151:	27 5b       	beq	1ae <.LBB13>
+
+00000153 <.LM40>:
+      break;
+
+    if(c == '\b')
+ 153:	c1 08       	cmpb	#8
+ 155:	26 20       	bne	177 <.LM45>
+
+00000157 <.LBB11>:
+#endif
+
+inline static void print (const char* msg)
+{
+  serial_print (msg);
+ 157:	cc 00 00    	ldd	#0 <_start>
+ 15a:	bd 00 00    	jsr	0 <_start>
+
+0000015d <.LM42>:
+    {
+      print("\b \b");
+      pos--;
+ 15d:	18 de 00    	ldy	*0 <_start>
+ 160:	cd ee 23    	ldx	35,y
+
+00000163 <.LBE11>:
+ 163:	09          	dex
+ 164:	cd ef 23    	stx	35,y
+
+00000167 <.LM43>:
+      if(pos < 0)
+ 167:	18 df 00    	sty	*0 <_start>
+ 16a:	8c 00 00    	cpx	#0 <_start>
+ 16d:	2a c6       	bpl	135 <.LBB10>
+
+0000016f <.LM44>:
+        pos = 0;
+ 16f:	de 00       	ldx	*0 <_start>
+ 171:	6f 24       	clr	36,x
+ 173:	6f 23       	clr	35,x
+ 175:	20 be       	bra	135 <.LBB10>
+
+00000177 <.LM45>:
+    }
+    else if(pos < sizeof (buf) - 1)
+ 177:	18 de 00    	ldy	*0 <_start>
+ 17a:	18 ec 23    	ldd	35,y
+ 17d:	1a 83 00 1e 	cpd	#1e <timer_interrupt+0xb>
+ 181:	22 b2       	bhi	135 <.LBB10>
+
+00000183 <.LM46>:
+    {
+      buf[pos] = c;
+ 183:	de 00       	ldx	*0 <_start>
+ 185:	08          	inx
+ 186:	dd 00       	std	*0 <_start>
+ 188:	8f          	xgdx
+ 189:	d3 00       	addd	*0 <_start>
+ 18b:	8f          	xgdx
+ 18c:	18 e6 28    	ldab	40,y
+ 18f:	e7 00       	stab	0,x
+
+00000191 <.LM47>:
+      buf[pos+1] = 0;
+ 191:	df 00       	stx	*0 <_start>
+ 193:	de 00       	ldx	*0 <_start>
+ 195:	08          	inx
+ 196:	8f          	xgdx
+ 197:	18 e3 23    	addd	35,y
+ 19a:	8f          	xgdx
+ 19b:	6f 01       	clr	1,x
+
+0000019d <.LBB12>:
+#endif
+
+inline static void print (const char* msg)
+{
+  serial_print (msg);
+ 19d:	dc 00       	ldd	*0 <_start>
+ 19f:	bd 00 00    	jsr	0 <_start>
+
+000001a2 <.LM49>:
+      print(&buf[pos]);
+      pos++;
+ 1a2:	18 de 00    	ldy	*0 <_start>
+ 1a5:	cd ee 23    	ldx	35,y
+
+000001a8 <.LBE12>:
+ 1a8:	08          	inx
+ 1a9:	cd ef 23    	stx	35,y
+ 1ac:	20 87       	bra	135 <.LBB10>
+
+000001ae <.LBB13>:
+#endif
+
+inline static void print (const char* msg)
+{
+  serial_print (msg);
+ 1ae:	cc 00 00    	ldd	#0 <_start>
+ 1b1:	bd 00 00    	jsr	0 <_start>
+
+000001b4 <.LM51>:
+    }
+  }
+
+  print("\n");
+  buf[pos] = 0;
+ 1b4:	dc 00       	ldd	*0 <_start>
+ 1b6:	c3 00 01    	addd	#1 <_start+0x1>
+ 1b9:	de 00       	ldx	*0 <_start>
+
+000001bb <.LBE13>:
+ 1bb:	e3 23       	addd	35,x
+ 1bd:	18 8f       	xgdy
+ 1bf:	18 6f 00    	clr	0,y
+
+000001c2 <.LM52>:
+  p = buf;
+ 1c2:	18 de 00    	ldy	*0 <_start>
+ 1c5:	18 08       	iny
+ 1c7:	1a ef 21    	sty	33,x
+
+000001ca <.LM53>:
+  hours = get_value(&p);
+ 1ca:	dc 00       	ldd	*0 <_start>
+ 1cc:	c3 00 21    	addd	#21 <.LM8>
+ 1cf:	bd 00 00    	jsr	0 <_start>
+ 1d2:	de 00       	ldx	*0 <_start>
+ 1d4:	ed 25       	std	37,x
+
+000001d6 <.LM54>:
+  if(*p++ != ':')
+ 1d6:	18 de 00    	ldy	*0 <_start>
+ 1d9:	ee 21       	ldx	33,x
+ 1db:	e6 00       	ldab	0,x
+ 1dd:	08          	inx
+ 1de:	cd ef 21    	stx	33,y
+ 1e1:	c1 3a       	cmpb	#58
+ 1e3:	27 05       	beq	1ea <.LM56>
+
+000001e5 <.LM55>:
+    error = 1;
+ 1e5:	cc 00 01    	ldd	#1 <_start+0x1>
+ 1e8:	dd 00       	std	*0 <_start>
+
+000001ea <.LM56>:
+  mins = get_value(&p);
+ 1ea:	dc 00       	ldd	*0 <_start>
+ 1ec:	c3 00 21    	addd	#21 <.LM8>
+ 1ef:	bd 00 00    	jsr	0 <_start>
+ 1f2:	dd 00       	std	*0 <_start>
+
+000001f4 <.LM57>:
+  if(*p++ != ':' || mins >= 60)
+ 1f4:	18 de 00    	ldy	*0 <_start>
+ 1f7:	cd ee 21    	ldx	33,y
+ 1fa:	e6 00       	ldab	0,x
+ 1fc:	08          	inx
+ 1fd:	cd ef 21    	stx	33,y
+ 200:	c1 3a       	cmpb	#58
+ 202:	26 07       	bne	20b <.LM58>
+ 204:	de 00       	ldx	*0 <_start>
+ 206:	8c 00 3b    	cpx	#3b <.LM11+0x2>
+ 209:	23 05       	bls	210 <.LM59>
+
+0000020b <.LM58>:
+    error = 1;
+ 20b:	cc 00 01    	ldd	#1 <_start+0x1>
+ 20e:	dd 00       	std	*0 <_start>
+
+00000210 <.LM59>:
+  secs = get_value(&p);
+ 210:	dc 00       	ldd	*0 <_start>
+ 212:	c3 00 21    	addd	#21 <.LM8>
+ 215:	bd 00 00    	jsr	0 <_start>
+ 218:	18 8f       	xgdy
+
+0000021a <.LM60>:
+  if(*p++ != 0 || secs >= 60)
+ 21a:	18 df 00    	sty	*0 <_start>
+ 21d:	18 de 00    	ldy	*0 <_start>
+ 220:	cd ee 21    	ldx	33,y
+ 223:	e6 00       	ldab	0,x
+ 225:	08          	inx
+ 226:	cd ef 21    	stx	33,y
+ 229:	18 de 00    	ldy	*0 <_start>
+ 22c:	5d          	tstb
+ 22d:	26 06       	bne	235 <.LM61>
+ 22f:	18 8c 00 3b 	cpy	#3b <.LM11+0x2>
+ 233:	23 05       	bls	23a <.LM62>
+
+00000235 <.LM61>:
+    error = 1;
+ 235:	ce 00 01    	ldx	#1 <_start+0x1>
+ 238:	df 00       	stx	*0 <_start>
+
+0000023a <.LM62>:
+
+  if(error == 0)
+ 23a:	dc 00       	ldd	*0 <_start>
+ 23c:	26 38       	bne	276 <.LBB15>
+
+0000023e <.LM63>:
+  {
+    boot_time = (hours * 3600) + (mins * 60) + (secs);
+ 23e:	ce 0e 10    	ldx	#e10 <.LFE65+0x71c>
+ 241:	df 00       	stx	*0 <_start>
+ 243:	de 00       	ldx	*0 <_start>
+ 245:	ec 25       	ldd	37,x
+ 247:	de 00       	ldx	*0 <_start>
+ 249:	bd 00 00    	jsr	0 <_start>
+ 24c:	dd 00       	std	*0 <_start>
+ 24e:	dc 00       	ldd	*0 <_start>
+ 250:	05          	asld
+ 251:	d3 00       	addd	*0 <_start>
+ 253:	dd 00       	std	*0 <_start>
+ 255:	05          	asld
+ 256:	05          	asld
+ 257:	dd 00       	std	*0 <_start>
+ 259:	dc 00       	ldd	*0 <_start>
+ 25b:	d3 00       	addd	*0 <_start>
+ 25d:	05          	asld
+ 25e:	05          	asld
+ 25f:	d3 00       	addd	*0 <_start>
+ 261:	dd 00       	std	*0 <_start>
+ 263:	18 df 00    	sty	*0 <_start>
+ 266:	d3 00       	addd	*0 <_start>
+ 268:	fd 00 02    	std	2 <_start+0x2>
+ 26b:	7f 00 01    	clr	1 <_start+0x1>
+ 26e:	7f 00 00    	clr	0 <_start>
+
+00000271 <.LBB14>:
+#endif
+
+inline static void print (const char* msg)
+{
+  serial_print (msg);
+ 271:	cc 00 00    	ldd	#0 <_start>
+ 274:	20 09       	bra	27f <.LBB16+0x3>
+
+00000276 <.LBB15>:
+ 276:	cc 00 00    	ldd	#0 <_start>
+ 279:	bd 00 00    	jsr	0 <_start>
+
+0000027c <.LBB16>:
+ 27c:	cc 00 00    	ldd	#0 <_start>
+ 27f:	bd 00 00    	jsr	0 <_start>
+
+00000282 <.LM67>:
+    print("Boot time is set.\r\n");
+  }
+  else
+  {
+    print("Invalid boot time.\r\n");
+    print("Format is: HH:MM:SS\r\n");
+  }
+}
+ 282:	38          	pulx
+ 283:	df 00       	stx	*0 <_start>
+ 285:	38          	pulx
+ 286:	df 00       	stx	*0 <_start>
+ 288:	38          	pulx
+ 289:	df 00       	stx	*0 <_start>
+ 28b:	30          	tsx
+ 28c:	8f          	xgdx
+ 28d:	c3 00 28    	addd	#28 <.LM8+0x7>
+ 290:	8f          	xgdx
+ 291:	35          	txs
+ 292:	38          	pulx
+ 293:	df 00       	stx	*0 <_start>
+ 295:	39          	rts
+
+00000296 <display_time>:
+
+// Display the current time on the serial line.
+static void display_time(unsigned long ntime)
+{
+ 296:	18 de 00    	ldy	*0 <_start>
+ 299:	18 3c       	pshy
+ 29b:	18 30       	tsy
+ 29d:	18 8f       	xgdy
+ 29f:	c3 ff ca    	addd	#ffca <.LFE65+0xf8d6>
+ 2a2:	18 8f       	xgdy
+ 2a4:	18 35       	tys
+ 2a6:	9f 00       	sts	*0 <_start>
+ 2a8:	18 de 00    	ldy	*0 <_start>
+ 2ab:	18 3c       	pshy
+ 2ad:	18 de 00    	ldy	*0 <_start>
+ 2b0:	18 3c       	pshy
+ 2b2:	18 de 00    	ldy	*0 <_start>
+ 2b5:	18 3c       	pshy
+ 2b7:	18 de 00    	ldy	*0 <_start>
+ 2ba:	18 3c       	pshy
+ 2bc:	dd 00       	std	*0 <_start>
+ 2be:	df 00       	stx	*0 <_start>
+
+000002c0 <.LM69>:
+  unsigned long seconds;
+  unsigned short hours, mins;
+  unsigned long nus;
+  char time_display[20];
+  char tick_display[20];
+
+  static unsigned long last_sec = 0xffffffff;
+  static unsigned long last_us = 0;
+
+  // Translate the number of ticks in seconds and milliseconds.
+  seconds = timer_seconds(ntime);
+ 2c0:	bd 00 00    	jsr	0 <_start>
+ 2c3:	18 de 00    	ldy	*0 <_start>
+ 2c6:	18 ed 31    	std	49,y
+ 2c9:	cd ef 2f    	stx	47,y
+ 2cc:	18 ed 2b    	std	43,y
+ 2cf:	cd ef 29    	stx	41,y
+
+000002d2 <.LM70>:
+  nus = timer_microseconds(ntime);
+ 2d2:	dc 00       	ldd	*0 <_start>
+ 2d4:	de 00       	ldx	*0 <_start>
+ 2d6:	bd 00 00    	jsr	0 <_start>
+ 2d9:	dd 00       	std	*0 <_start>
+ 2db:	df 00       	stx	*0 <_start>
+
+000002dd <.LM71>:
+
+  // Get the raw number of "micro-seconds" before processing.
+  sprintf(tick_display, "t=%ld, %ld, %ld", timer_count, nus, seconds);
+ 2dd:	18 de 00    	ldy	*0 <_start>
+ 2e0:	cd ee 2b    	ldx	43,y
+ 2e3:	3c          	pshx
+ 2e4:	cd ee 29    	ldx	41,y
+ 2e7:	3c          	pshx
+ 2e8:	37          	pshb
+ 2e9:	36          	psha
+ 2ea:	de 00       	ldx	*0 <_start>
+ 2ec:	3c          	pshx
+ 2ed:	fe 00 02    	ldx	2 <_start+0x2>
+ 2f0:	3c          	pshx
+ 2f1:	fe 00 00    	ldx	0 <_start>
+ 2f4:	3c          	pshx
+ 2f5:	18 ce 00 00 	ldy	#0 <_start>
+ 2f9:	18 3c       	pshy
+ 2fb:	cc 00 15    	ldd	#15 <timer_interrupt+0x2>
+ 2fe:	d3 00       	addd	*0 <_start>
+ 300:	bd 00 00    	jsr	0 <_start>
+
+00000303 <.LM72>:
+
+  // Write the timer count, microseconds, and seconds
+  // out to the LCD display for diagnostic purposes.
+  LCD_Command(LINE_3);               // goto lcd line 3
+ 303:	c6 94       	ldab	#148
+ 305:	bd 00 00    	jsr	0 <_start>
+
+00000308 <.LM73>:
+  LCDprint(tick_display);
+ 308:	cc 00 15    	ldd	#15 <timer_interrupt+0x2>
+ 30b:	d3 00       	addd	*0 <_start>
+ 30d:	bd 00 00    	jsr	0 <_start>
+
+00000310 <.LM74>:
+
+  nus = nus / 100000L;
+ 310:	ce 86 a0    	ldx	#86a0 <.LFE65+0x7fac>
+ 313:	3c          	pshx
+ 314:	ce 00 01    	ldx	#1 <_start+0x1>
+ 317:	3c          	pshx
+ 318:	dc 00       	ldd	*0 <_start>
+ 31a:	de 00       	ldx	*0 <_start>
+ 31c:	bd 00 00    	jsr	0 <_start>
+ 31f:	dd 00       	std	*0 <_start>
+ 321:	df 00       	stx	*0 <_start>
+
+00000323 <.LM75>:
+
+  // If the seconds changed, re-display everything.
+  if(seconds != last_sec)
+ 323:	fc 00 02    	ldd	2 <_start+0x2>
+ 326:	dd 00       	std	*0 <_start>
+ 328:	fc 00 00    	ldd	0 <_start>
+ 32b:	30          	tsx
+ 32c:	8f          	xgdx
+ 32d:	c3 00 12    	addd	#12 <.LBE2+0x2>
+ 330:	8f          	xgdx
+ 331:	35          	txs
+ 332:	18 de 00    	ldy	*0 <_start>
+ 335:	cd a3 29    	cpd	41,y
+ 338:	26 0a       	bne	344 <.LM76>
+ 33a:	dc 00       	ldd	*0 <_start>
+ 33c:	cd a3 2b    	cpd	43,y
+ 33f:	26 03       	bne	344 <.LM76>
+ 341:	7e 00 00    	jmp	0 <_start>
+
+00000344 <.LM76>:
+  {
+    last_sec = seconds;
+ 344:	18 de 00    	ldy	*0 <_start>
+ 347:	18 ec 31    	ldd	49,y
+ 34a:	fd 00 02    	std	2 <_start+0x2>
+ 34d:	18 ec 2f    	ldd	47,y
+ 350:	fd 00 00    	std	0 <_start>
+
+00000353 <.LM77>:
+    last_us = nus;
+ 353:	dc 00       	ldd	*0 <_start>
+ 355:	fd 00 02    	std	2 <_start+0x2>
+ 358:	dc 00       	ldd	*0 <_start>
+ 35a:	fd 00 00    	std	0 <_start>
+
+0000035d <.LM78>:
+    hours = (unsigned short) (seconds / 3600L);
+ 35d:	18 ce 0e 10 	ldy	#e10 <.LFE65+0x71c>
+ 361:	18 3c       	pshy
+ 363:	18 ce 00 00 	ldy	#0 <_start>
+ 367:	18 3c       	pshy
+ 369:	18 de 00    	ldy	*0 <_start>
+ 36c:	18 ec 31    	ldd	49,y
+ 36f:	cd ee 2f    	ldx	47,y
+ 372:	bd 00 00    	jsr	0 <_start>
+ 375:	38          	pulx
+ 376:	38          	pulx
+ 377:	18 de 00    	ldy	*0 <_start>
+ 37a:	18 ed 2d    	std	45,y
+
+0000037d <.LM79>:
+    mins = (unsigned short) (seconds % 3600L);
+ 37d:	ce 0e 10    	ldx	#e10 <.LFE65+0x71c>
+ 380:	3c          	pshx
+ 381:	ce 00 00    	ldx	#0 <_start>
+ 384:	3c          	pshx
+ 385:	18 ec 31    	ldd	49,y
+ 388:	cd ee 2f    	ldx	47,y
+ 38b:	bd 00 00    	jsr	0 <_start>
+ 38e:	18 38       	puly
+ 390:	18 38       	puly
+
+00000392 <.LM80>:
+    seconds = (unsigned long) (mins % 60);
+ 392:	ce 00 3c    	ldx	#3c <.LM11+0x3>
+ 395:	02          	idiv
+ 396:	8f          	xgdx
+ 397:	18 de 00    	ldy	*0 <_start>
+ 39a:	18 ed 35    	std	53,y
+ 39d:	cd ef 2b    	stx	43,y
+ 3a0:	18 6f 2a    	clr	42,y
+ 3a3:	18 6f 29    	clr	41,y
+
+000003a6 <.LM81>:
+    mins = mins / 60;
+    time_display[0] = '0' + (hours / 10);
+ 3a6:	18 ec 2d    	ldd	45,y
+ 3a9:	ce 00 0a    	ldx	#a <.LM3+0x2>
+ 3ac:	02          	idiv
+ 3ad:	8f          	xgdx
+ 3ae:	cb 30       	addb	#48
+ 3b0:	18 e7 01    	stab	1,y
+
+000003b3 <.LM82>:
+    time_display[1] = '0' + (hours % 10);
+ 3b3:	8f          	xgdx
+ 3b4:	cb 30       	addb	#48
+ 3b6:	18 e7 02    	stab	2,y
+
+000003b9 <.LM83>:
+    time_display[2] = ':';
+ 3b9:	c6 3a       	ldab	#58
+ 3bb:	18 e7 03    	stab	3,y
+
+000003be <.LM84>:
+    time_display[3] = '0' + (mins / 10);
+ 3be:	18 ec 35    	ldd	53,y
+ 3c1:	ce 00 0a    	ldx	#a <.LM3+0x2>
+ 3c4:	02          	idiv
+ 3c5:	8f          	xgdx
+ 3c6:	cb 30       	addb	#48
+ 3c8:	18 e7 04    	stab	4,y
+
+000003cb <.LM85>:
+    time_display[4] = '0' + (mins % 10);
+ 3cb:	8f          	xgdx
+ 3cc:	cb 30       	addb	#48
+ 3ce:	18 e7 05    	stab	5,y
+
+000003d1 <.LM86>:
+    time_display[5] = ':';
+ 3d1:	c6 3a       	ldab	#58
+ 3d3:	18 e7 06    	stab	6,y
+
+000003d6 <.LM87>:
+    time_display[6] = '0' + (seconds / 10);
+ 3d6:	18 ce 00 0a 	ldy	#a <.LM3+0x2>
+ 3da:	18 3c       	pshy
+ 3dc:	18 ce 00 00 	ldy	#0 <_start>
+ 3e0:	18 3c       	pshy
+ 3e2:	18 de 00    	ldy	*0 <_start>
+ 3e5:	18 ec 2b    	ldd	43,y
+ 3e8:	ce 00 00    	ldx	#0 <_start>
+ 3eb:	bd 00 00    	jsr	0 <_start>
+ 3ee:	38          	pulx
+ 3ef:	38          	pulx
+ 3f0:	cb 30       	addb	#48
+ 3f2:	18 de 00    	ldy	*0 <_start>
+ 3f5:	18 e7 07    	stab	7,y
+
+000003f8 <.LM88>:
+    time_display[7] = '0' + (seconds % 10);
+ 3f8:	ce 00 0a    	ldx	#a <.LM3+0x2>
+ 3fb:	3c          	pshx
+ 3fc:	ce 00 00    	ldx	#0 <_start>
+ 3ff:	3c          	pshx
+ 400:	18 ec 2b    	ldd	43,y
+ 403:	cd ee 29    	ldx	41,y
+ 406:	bd 00 00    	jsr	0 <_start>
+ 409:	18 38       	puly
+ 40b:	18 38       	puly
+ 40d:	cb 30       	addb	#48
+ 40f:	18 de 00    	ldy	*0 <_start>
+ 412:	18 e7 08    	stab	8,y
+
+00000415 <.LM89>:
+    time_display[8] = 0;
+ 415:	18 6f 09    	clr	9,y
+
+00000418 <.LM90>:
+    serial_print("\r");
+ 418:	cc 00 00    	ldd	#0 <_start>
+ 41b:	bd 00 00    	jsr	0 <_start>
+
+0000041e <.LM91>:
+    serial_print(time_display);
+ 41e:	dc 00       	ldd	*0 <_start>
+ 420:	c3 00 01    	addd	#1 <_start+0x1>
+ 423:	bd 00 00    	jsr	0 <_start>
+
+00000426 <.LM92>:
+
+    // Write the clock time out to the LCD display.
+    LCD_Command(LINE_2);               // goto lcd line 2
+ 426:	c6 c0       	ldab	#192
+ 428:	bd 00 00    	jsr	0 <_start>
+
+0000042b <.LM93>:
+    LCDprint(time_display);
+ 42b:	dc 00       	ldd	*0 <_start>
+ 42d:	c3 00 01    	addd	#1 <_start+0x1>
+ 430:	bd 00 00    	jsr	0 <_start>
+ 433:	7e 00 00    	jmp	0 <_start>
+
+00000436 <.L54>:
+  }
+
+  // Do this stuff every tenth of a second.
+  else if(last_us != nus)
+ 436:	fc 00 02    	ldd	2 <_start+0x2>
+ 439:	fe 00 00    	ldx	0 <_start>
+ 43c:	9c 00       	cpx	*0 <_start>
+ 43e:	26 08       	bne	448 <.LM95>
+ 440:	1a 93 00    	cpd	*0 <_start>
+ 443:	26 03       	bne	448 <.LM95>
+ 445:	7e 00 00    	jmp	0 <_start>
+
+00000448 <.LM95>:
+  {
+    last_us = nus;
+ 448:	dc 00       	ldd	*0 <_start>
+ 44a:	fd 00 02    	std	2 <_start+0x2>
+ 44d:	dc 00       	ldd	*0 <_start>
+ 44f:	fd 00 00    	std	0 <_start>
+
+00000452 <.LM96>:
+
+	  // If the open shutter flag has been set and the shutter is not already in the opened position,
+	  // turn on the appropriate half of the H-bridge driver for the desired number of milliseconds.
+	  if(open_shutter)
+ 452:	fe 00 00    	ldx	0 <_start>
+ 455:	27 6c       	beq	4c3 <.LM113>
+
+00000457 <.LM97>:
+	  {
+      // If the user is requesting that the shutter be opened, then we must be moving away from the
+      // shutter closed position.
+      close_shutter = 0;
+ 457:	7f 00 01    	clr	1 <_start+0x1>
+ 45a:	7f 00 00    	clr	0 <_start>
+
+0000045d <.LM98>:
+      shutter_closed = 0;
+ 45d:	7f 00 01    	clr	1 <_start+0x1>
+ 460:	7f 00 00    	clr	0 <_start>
+
+00000463 <.LM99>:
+
+      // If the shutter is not already opened, then enable the open pulse for the desired pulse duration.
+      if(!shutter_opened)
+ 463:	fe 00 00    	ldx	0 <_start>
+ 466:	26 55       	bne	4bd <.LM112>
+
+00000468 <.LM100>:
+      {
+        // If the duration is still not yet acheived, keep the pulse on.
+        if(on_count < ON_TIME)
+ 468:	fc 00 00    	ldd	0 <_start>
+ 46b:	26 1a       	bne	487 <.LM104>
+
+0000046d <.LM101>:
+        {
+          // Open the shutter.
+          _io_ports[M6811_PORTA] &= ~PA4;
+ 46d:	f6 00 00    	ldab	0 <_start>
+ 470:	c4 ef       	andb	#239
+ 472:	f7 00 00    	stab	0 <_start>
+
+00000475 <.LM102>:
+          _io_ports[M6811_PORTA] |= PA5;
+ 475:	f6 00 00    	ldab	0 <_start>
+ 478:	ca 20       	orab	#32
+ 47a:	f7 00 00    	stab	0 <_start>
+
+0000047d <.LM103>:
+
+          // Increase the counter to indicate the number of ms the pulse has been asserted.
+          on_count++;
+ 47d:	18 ce 00 01 	ldy	#1 <_start+0x1>
+ 481:	18 ff 00 00 	sty	0 <_start>
+ 485:	20 3c       	bra	4c3 <.LM113>
+
+00000487 <.LM104>:
+        }
+
+        // If the pulse has been on for the required number of ms, put the H-bridge back into idle
+        // for a minimum amount of time before accepting a new command to open the shutter.
+        else if(off_count < OFF_TIME)
+ 487:	18 fe 00 00 	ldy	0 <_start>
+ 48b:	18 8c 00 02 	cpy	#2 <_start+0x2>
+ 48f:	22 19       	bhi	4aa <.LM108>
+
+00000491 <.LM105>:
+        {
+          // Bring the H-bridge driver back into the idle state.
+          _io_ports[M6811_PORTA] &= ~PA4;
+ 491:	f6 00 00    	ldab	0 <_start>
+ 494:	c4 ef       	andb	#239
+ 496:	f7 00 00    	stab	0 <_start>
+
+00000499 <.LM106>:
+          _io_ports[M6811_PORTA] &= ~PA5;
+ 499:	f6 00 00    	ldab	0 <_start>
+ 49c:	c4 df       	andb	#223
+ 49e:	f7 00 00    	stab	0 <_start>
+
+000004a1 <.LM107>:
+          
+          // Increase the counter to indicate the number of ms the pulse has been de-asserted.
+          off_count++;
+ 4a1:	18 8f       	xgdy
+ 4a3:	8f          	xgdx
+ 4a4:	08          	inx
+ 4a5:	ff 00 00    	stx	0 <_start>
+ 4a8:	20 19       	bra	4c3 <.LM113>
+
+000004aa <.LM108>:
+        }
+        
+        else
+        {
+          // After the pulse has been on for the desired amount of time and then off for the minimum
+          // amount of time, reset the open shutter flag, the pulse delay counters, and signal that 
+          // the shutter is now opened.
+          on_count = 0;
+ 4aa:	ff 00 00    	stx	0 <_start>
+
+000004ad <.LM109>:
+          off_count = 0;
+ 4ad:	ff 00 00    	stx	0 <_start>
+
+000004b0 <.LM110>:
+          open_shutter = 0;
+ 4b0:	ff 00 00    	stx	0 <_start>
+
+000004b3 <.LM111>:
+          shutter_opened = 1;
+ 4b3:	18 ce 00 01 	ldy	#1 <_start+0x1>
+ 4b7:	18 ff 00 00 	sty	0 <_start>
+ 4bb:	20 06       	bra	4c3 <.LM113>
+
+000004bd <.LM112>:
+        }
+      }
+
+      // If the shutter is already opened, reset the open shutter flag.
+      else
+      {
+        open_shutter = 0;
+ 4bd:	7f 00 01    	clr	1 <_start+0x1>
+ 4c0:	7f 00 00    	clr	0 <_start>
+
+000004c3 <.LM113>:
+      }
+    }
+
+	  // If the close shutter flag has been set and the shutter is not already in the closed position,
+	  // turn on the appropriate half of the H-bridge driver for the desired number of milliseconds.
+    if(close_shutter)
+ 4c3:	fe 00 00    	ldx	0 <_start>
+ 4c6:	27 6c       	beq	534 <.L73>
+
+000004c8 <.LM114>:
+    {
+      // If the user is requesting that the shutter be closed, then we must be transitioning from the
+      // shutter opened position.
+      open_shutter = 0;
+ 4c8:	7f 00 01    	clr	1 <_start+0x1>
+ 4cb:	7f 00 00    	clr	0 <_start>
+
+000004ce <.LM115>:
+      shutter_opened = 0;
+ 4ce:	7f 00 01    	clr	1 <_start+0x1>
+ 4d1:	7f 00 00    	clr	0 <_start>
+
+000004d4 <.LM116>:
+
+      // If the shutter is not already closed, then enable the close pulse for the desired pulse duration.
+      if(!shutter_closed)
+ 4d4:	fe 00 00    	ldx	0 <_start>
+ 4d7:	26 55       	bne	52e <.LM129>
+
+000004d9 <.LM117>:
+      {
+        // If the duration is still not yet acheived, keep the pulse on.
+        if(on_count < ON_TIME)
+ 4d9:	fc 00 00    	ldd	0 <_start>
+ 4dc:	26 1a       	bne	4f8 <.LM121>
+
+000004de <.LM118>:
+        {
+          // Close the shutter.
+          _io_ports[M6811_PORTA] |= PA4;
+ 4de:	f6 00 00    	ldab	0 <_start>
+ 4e1:	ca 10       	orab	#16
+ 4e3:	f7 00 00    	stab	0 <_start>
+
+000004e6 <.LM119>:
+          _io_ports[M6811_PORTA] &= ~PA5;
+ 4e6:	f6 00 00    	ldab	0 <_start>
+ 4e9:	c4 df       	andb	#223
+ 4eb:	f7 00 00    	stab	0 <_start>
+
+000004ee <.LM120>:
+
+          // Increase the counter to indicate the number of ms the pulse has been asserted.
+          on_count++;
+ 4ee:	18 ce 00 01 	ldy	#1 <_start+0x1>
+ 4f2:	18 ff 00 00 	sty	0 <_start>
+ 4f6:	20 3c       	bra	534 <.L73>
+
+000004f8 <.LM121>:
+        }
+
+        // If the pulse has been on for the required number of ms, put the H-bridge back into idle
+        // for a minimum amount of time before accepting another command to close the shutter.
+        else if(off_count < OFF_TIME)
+ 4f8:	18 fe 00 00 	ldy	0 <_start>
+ 4fc:	18 8c 00 02 	cpy	#2 <_start+0x2>
+ 500:	22 19       	bhi	51b <.LM125>
+
+00000502 <.LM122>:
+        {
+          // Bring the H-bridge driver back into the idle state.
+          _io_ports[M6811_PORTA] &= ~PA4;
+ 502:	f6 00 00    	ldab	0 <_start>
+ 505:	c4 ef       	andb	#239
+ 507:	f7 00 00    	stab	0 <_start>
+
+0000050a <.LM123>:
+          _io_ports[M6811_PORTA] &= ~PA5;
+ 50a:	f6 00 00    	ldab	0 <_start>
+ 50d:	c4 df       	andb	#223
+ 50f:	f7 00 00    	stab	0 <_start>
+
+00000512 <.LM124>:
+
+          // Increase the counter to indicate the number of ms the pulse has been de-asserted.
+          off_count++;
+ 512:	18 8f       	xgdy
+ 514:	8f          	xgdx
+ 515:	08          	inx
+ 516:	ff 00 00    	stx	0 <_start>
+ 519:	20 19       	bra	534 <.L73>
+
+0000051b <.LM125>:
+        }
+
+        else
+        {
+          // After the pulse has been on for the desired amount of time and then off for the minimum 
+          // amount of time, reset the close shutter flag, the pulse delay counters, and signal that 
+          // the shutter is now closed.
+          on_count = 0;
+ 51b:	ff 00 00    	stx	0 <_start>
+
+0000051e <.LM126>:
+          off_count = 0;
+ 51e:	ff 00 00    	stx	0 <_start>
+
+00000521 <.LM127>:
+          close_shutter = 0;
+ 521:	ff 00 00    	stx	0 <_start>
+
+00000524 <.LM128>:
+          shutter_closed = 1;
+ 524:	18 ce 00 01 	ldy	#1 <_start+0x1>
+ 528:	18 ff 00 00 	sty	0 <_start>
+ 52c:	20 06       	bra	534 <.L73>
+
+0000052e <.LM129>:
+        }
+      }
+
+      // If the shutter is already closed, reset the close shutter flag.
+      else
+      {
+        close_shutter = 0;
+ 52e:	7f 00 01    	clr	1 <_start+0x1>
+ 531:	7f 00 00    	clr	0 <_start>
+
+00000534 <.L73>:
+}
+
+extern inline void
+cop_optional_reset (void)
+{
+ 534:	f6 00 2e    	ldab	2e <.LM8+0xd>
+ 537:	2a fb       	bpl	534 <.L73>
+
+00000539 <.LM132>:
+      }
+    }
+  }
+
+  serial_flush();
+}
+ 539:	38          	pulx
+ 53a:	df 00       	stx	*0 <_start>
+ 53c:	38          	pulx
+ 53d:	df 00       	stx	*0 <_start>
+ 53f:	38          	pulx
+ 540:	df 00       	stx	*0 <_start>
+ 542:	38          	pulx
+ 543:	df 00       	stx	*0 <_start>
+ 545:	30          	tsx
+ 546:	c6 36       	ldab	#54
+ 548:	3a          	abx
+ 549:	35          	txs
+ 54a:	38          	pulx
+ 54b:	df 00       	stx	*0 <_start>
+ 54d:	39          	rts
+
+0000054e <LCD_busy>:
+
+// Wait for the LCD busy pin to clear
+void LCD_busy()
+{
+ 54e:	de 00       	ldx	*0 <_start>
+ 550:	3c          	pshx
+ 551:	9f 00       	sts	*0 <_start>
+
+00000553 <.LM134>:
+  while ((LCD_CMD & 0x80)) ;
+ 553:	ce b5 f0    	ldx	#b5f0 <.LFE65+0xaefc>
+ 556:	6d 00       	tst	0,x
+ 558:	2b f9       	bmi	553 <.LM134>
+
+0000055a <.LM135>:
+}
+ 55a:	38          	pulx
+ 55b:	df 00       	stx	*0 <_start>
+ 55d:	39          	rts
+
+0000055e <LCD_Command>:
+
+void LCD_Command(unsigned char cval)
+{
+ 55e:	de 00       	ldx	*0 <_start>
+ 560:	3c          	pshx
+ 561:	34          	des
+ 562:	9f 00       	sts	*0 <_start>
+ 564:	de 00       	ldx	*0 <_start>
+ 566:	e7 01       	stab	1,x
+
+00000568 <.LM137>:
+  LCD_busy();                         // wait for busy to clear
+ 568:	8d e4       	bsr	54e <LCD_busy>
+
+0000056a <.LM138>:
+  LCD_CMD = cval;                     // ouptut command
+ 56a:	ce b5 f0    	ldx	#b5f0 <.LFE65+0xaefc>
+ 56d:	18 de 00    	ldy	*0 <_start>
+ 570:	18 e6 01    	ldab	1,y
+ 573:	e7 00       	stab	0,x
+
+00000575 <.LM139>:
+}
+ 575:	31          	ins
+ 576:	38          	pulx
+ 577:	df 00       	stx	*0 <_start>
+ 579:	39          	rts
+
+0000057a <LCD_Initialize>:
+
+void LCD_Initialize(void)
+{
+ 57a:	de 00       	ldx	*0 <_start>
+ 57c:	3c          	pshx
+ 57d:	9f 00       	sts	*0 <_start>
+
+0000057f <.LM141>:
+  // Initialize the LCD
+  LCD_Command(0x3C);                 // initialize command
+ 57f:	c6 3c       	ldab	#60
+ 581:	8d db       	bsr	55e <LCD_Command>
+
+00000583 <.LM142>:
+  LCD_Command(0x0C);                 // display on, cursor off
+ 583:	c6 0c       	ldab	#12
+ 585:	8d d7       	bsr	55e <LCD_Command>
+
+00000587 <.LM143>:
+  LCD_Command(0x06);
+ 587:	c6 06       	ldab	#6
+ 589:	8d d3       	bsr	55e <LCD_Command>
+
+0000058b <.LM144>:
+  LCD_Command(0x01);
+ 58b:	c6 01       	ldab	#1
+ 58d:	8d cf       	bsr	55e <LCD_Command>
+
+0000058f <.LM145>:
+}
+ 58f:	38          	pulx
+ 590:	df 00       	stx	*0 <_start>
+ 592:	39          	rts
+
+00000593 <cprint>:
+
+// LCD Display Character
+void cprint(char dval)
+{
+ 593:	de 00       	ldx	*0 <_start>
+ 595:	3c          	pshx
+ 596:	34          	des
+ 597:	9f 00       	sts	*0 <_start>
+ 599:	de 00       	ldx	*0 <_start>
+ 59b:	e7 01       	stab	1,x
+
+0000059d <.LM147>:
+  LCD_busy();                         // wait for busy to clear
+ 59d:	8d af       	bsr	54e <LCD_busy>
+
+0000059f <.LM148>:
+  LCD_DAT = dval;                     // ouptut data
+ 59f:	ce b5 f1    	ldx	#b5f1 <.LFE65+0xaefd>
+ 5a2:	18 de 00    	ldy	*0 <_start>
+ 5a5:	18 e6 01    	ldab	1,y
+ 5a8:	e7 00       	stab	0,x
+
+000005aa <.LM149>:
+}
+ 5aa:	31          	ins
+ 5ab:	38          	pulx
+ 5ac:	df 00       	stx	*0 <_start>
+ 5ae:	39          	rts
+
+000005af <LCDprint>:
+
+// LCD Display String
+void LCDprint(char *sptr)
+{
+ 5af:	de 00       	ldx	*0 <_start>
+ 5b1:	3c          	pshx
+ 5b2:	3c          	pshx
+ 5b3:	9f 00       	sts	*0 <_start>
+ 5b5:	de 00       	ldx	*0 <_start>
+ 5b7:	ed 01       	std	1,x
+
+000005b9 <.LM151>:
+	while( *sptr )
+ 5b9:	18 8f       	xgdy
+ 5bb:	18 e6 00    	ldab	0,y
+ 5be:	27 16       	beq	5d6 <.LM154>
+
+000005c0 <.LM152>:
+  {
+		cprint(*sptr);
+ 5c0:	de 00       	ldx	*0 <_start>
+ 5c2:	ee 01       	ldx	1,x
+ 5c4:	e6 00       	ldab	0,x
+ 5c6:	8d cb       	bsr	593 <cprint>
+
+000005c8 <.LM153>:
+		++sptr;
+ 5c8:	18 de 00    	ldy	*0 <_start>
+ 5cb:	cd ee 01    	ldx	1,y
+ 5ce:	08          	inx
+ 5cf:	cd ef 01    	stx	1,y
+ 5d2:	6d 00       	tst	0,x
+ 5d4:	26 ea       	bne	5c0 <.LM152>
+
+000005d6 <.LM154>:
+	}
+}
+ 5d6:	38          	pulx
+ 5d7:	38          	pulx
+ 5d8:	df 00       	stx	*0 <_start>
+ 5da:	39          	rts
+
+000005db <ButtonPressed>:
+
+// returns 1 if a key is pressed.
+// the key value/index is stored in the global variable NewKey.
+unsigned short ButtonPressed(void)
+{
+ 5db:	de 00       	ldx	*0 <_start>
+ 5dd:	3c          	pshx
+ 5de:	9f 00       	sts	*0 <_start>
+
+000005e0 <.LM156>:
+  unsigned short buttons = 0;
+  buttons = _io_ports[M6811_PORTA] & 0x07;
+ 5e0:	f6 00 00    	ldab	0 <_start>
+ 5e3:	84 00       	anda	#0
+ 5e5:	c4 07       	andb	#7
+
+000005e7 <.LM157>:
+  return buttons;
+}
+ 5e7:	38          	pulx
+ 5e8:	df 00       	stx	*0 <_start>
+ 5ea:	39          	rts
+
+000005eb <main>:
+
+int main()
+{
+ 5eb:	de 00       	ldx	*0 <_start>
+ 5ed:	3c          	pshx
+ 5ee:	30          	tsx
+ 5ef:	8f          	xgdx
+ 5f0:	c3 ff ec    	addd	#ffec <.LFE65+0xf8f8>
+ 5f3:	8f          	xgdx
+ 5f4:	35          	txs
+ 5f5:	9f 00       	sts	*0 <_start>
+ 5f7:	de 00       	ldx	*0 <_start>
+ 5f9:	3c          	pshx
+ 5fa:	de 00       	ldx	*0 <_start>
+ 5fc:	3c          	pshx
+
+000005fd <.LM159>:
+  unsigned long prev_time;
+  unsigned short buttons = 0;
+ 5fd:	ce 00 00    	ldx	#0 <_start>
+
+00000600 <.LM160>:
+*/
+extern inline void
+serial_init (void)
+{
+  _io_ports[M6811_BAUD] = M6811_DEF_BAUD;
+ 600:	c6 30       	ldab	#48
+
+00000602 <.LBB21>:
+ 602:	f7 00 2b    	stab	2b <.LM8+0xa>
+
+00000605 <.LM161>:
+
+  /* Setup character format 1 start, 8-bits, 1 stop.  */
+  _io_ports[M6811_SCCR1] = 0;
+ 605:	8f          	xgdx
+ 606:	f7 00 2c    	stab	2c <.LM8+0xb>
+ 609:	8f          	xgdx
+
+0000060a <.LM162>:
+
+  /* Enable reciever and transmitter.  */
+  _io_ports[M6811_SCCR2] = 0xc;
+ 60a:	c6 0c       	ldab	#12
+ 60c:	f7 00 2d    	stab	2d <.LM8+0xc>
+
+0000060f <.LBB22>:
+lock (void)
+{
+  unsigned short mask;
+
+  __asm__ __volatile__ ("tpa\n\tsei" : "=d"(mask));
+ 60f:	07          	tpa
+ 610:	0f          	sei
+
+00000611 <.LBE22>:
+  unsigned short button_open = 0;
+  unsigned short button_close = 0;
+  unsigned short button_clear = 0;
+  unsigned short button_open_count = 0;
+  unsigned short button_close_count = 0;
+  char button_display[20];
+
+  serial_init();
+  lock();
+  boot_time = 0;
+  timer_count = 0;
+ 611:	4f          	clra
+ 612:	5f          	clrb
+ 613:	fd 00 02    	std	2 <_start+0x2>
+ 616:	fd 00 00    	std	0 <_start>
+ 619:	fd 00 02    	std	2 <_start+0x2>
+ 61c:	fd 00 00    	std	0 <_start>
+
+0000061f <.LM166>:
+
+  // Set the shutter flags and counters to zero to start off with.
+  shutter_opened = 0;
+ 61f:	ff 00 00    	stx	0 <_start>
+
+00000622 <.LM167>:
+  shutter_closed = 0;
+ 622:	ff 00 00    	stx	0 <_start>
+
+00000625 <.LM168>:
+  open_shutter = 0;
+ 625:	ff 00 00    	stx	0 <_start>
+
+00000628 <.LM169>:
+  close_shutter = 0;
+ 628:	ff 00 00    	stx	0 <_start>
+
+0000062b <.LM170>:
+  on_count = 0;
+ 62b:	ff 00 00    	stx	0 <_start>
+
+0000062e <.LM171>:
+  off_count = 0;
+ 62e:	ff 00 00    	stx	0 <_start>
+
+00000631 <.LBB24>:
+
+  /* Set interrupt handler for bootstrap mode.
+     Compute address of that vector (3-bytes for each).
+     Cast to unsigned short to avoid a Gcc warnings if sizeof int == 32.  */
+  p = (unsigned char*) ((unsigned short) (0x100 - 3 * (RESET_VECTOR - id)));
+ 631:	ce 00 eb    	ldx	#eb <.LM27+0x11>
+
+00000634 <.LM173>:
+  *p++ = M68HC11_JMP;
+ 634:	c6 7e       	ldab	#126
+ 636:	e7 00       	stab	0,x
+ 638:	ce 00 ec    	ldx	#ec <.LM27+0x12>
+
+0000063b <.LM174>:
+  ((interrupt_t*)p)[0] = handler;
+ 63b:	18 ce 00 00 	ldy	#0 <_start>
+ 63f:	1a ef 00    	sty	0,x
+
+00000642 <.LM175>:
+/* Initialize the timer.  */
+extern inline void
+timer_initialize_rate (unsigned char divisor)
+{
+  _io_ports[M6811_TMSK2] = M6811_RTII | divisor;
+ 642:	c6 43       	ldab	#67
+
+00000644 <.LBB26>:
+ 644:	f7 00 24    	stab	24 <.LM8+0x3>
+
+00000647 <.LBE26>:
+
+  // Set interrupt handler for bootstrap mode.
+  set_interrupt_handler(RTI_VECTOR, timer_interrupt);
+
+  // Initialize the timer.
+  timer_initialize_rate(M6811_TPR_16);
+  prev_time = timer_count;
+ 647:	fc 00 02    	ldd	2 <_start+0x2>
+ 64a:	dd 00       	std	*0 <_start>
+ 64c:	fc 00 00    	ldd	0 <_start>
+ 64f:	dd 00       	std	*0 <_start>
+
+00000651 <.LBB27>:
+    @see lock, restore  */
+static __inline__ void
+unlock (void)
+{
+  __asm__ __volatile__ ("cli");
+ 651:	0e          	cli
+
+00000652 <.LBE27>:
+
+  unlock();
+
+  // Get the LCD ready for use.
+  LCD_Initialize();
+ 652:	bd 00 00    	jsr	0 <_start>
+
+00000655 <.LBB28>:
+#endif
+
+inline static void print (const char* msg)
+{
+  serial_print (msg);
+ 655:	cc 00 00    	ldd	#0 <_start>
+ 658:	bd 00 00    	jsr	0 <_start>
+
+0000065b <.LBE28>:
+
+  // Print the "welcome" message out the serial port and on the LCD.
+  print("\nHello, world!\n");
+  LCD_Command(LINE_1);               // goto lcd line 1
+ 65b:	c6 80       	ldab	#128
+ 65d:	bd 00 00    	jsr	0 <_start>
+
+00000660 <.LM182>:
+  LCDprint("Hello, world!");
+ 660:	cc 00 00    	ldd	#0 <_start>
+ 663:	bd 00 00    	jsr	0 <_start>
+
+00000666 <.L116>:
+*/
+extern inline unsigned char
+serial_receive_pending (void)
+{
+  return _io_ports[M6811_SCSR] & M6811_RDRF;
+ 666:	f6 00 2e    	ldab	2e <.LM8+0xd>
+
+00000669 <.LBE30>:
+ 669:	c5 20       	bitb	#32
+ 66b:	27 03       	beq	670 <.LM187>
+
+0000066d <.LM186>:
+
+  // Loop waiting for the time to change and redisplay it.
+  while(1)
+  {
+    unsigned long ntime;
+
+    // Reset the COP (in case it is active).
+    cop_optional_reset();
+
+    /* If something is received on the serial line,
+       ask for the boot time again.  */
+    if(serial_receive_pending())
+      get_time();
+ 66d:	bd 00 00    	jsr	0 <_start>
+
+00000670 <.LM187>:
+
+    buttons = ButtonPressed();
+ 670:	bd 00 00    	jsr	0 <_start>
+ 673:	dd 00       	std	*0 <_start>
+ 675:	18 de 00    	ldy	*0 <_start>
+
+00000678 <.LM188>:
+
+    button_open = buttons & PA0;
+ 678:	84 00       	anda	#0
+ 67a:	c4 01       	andb	#1
+ 67c:	8f          	xgdx
+
+0000067d <.LM189>:
+    button_close = buttons & PA1;
+ 67d:	18 8f       	xgdy
+ 67f:	84 00       	anda	#0
+ 681:	c4 02       	andb	#2
+
+00000683 <.LM190>:
+    button_clear = buttons & PA2;
+
+    // If the shutter open button has been pressed, assert the shutter open flag.
+    if(button_open)
+ 683:	8c 00 00    	cpx	#0 <_start>
+ 686:	27 08       	beq	690 <.LM192>
+
+00000688 <.LM191>:
+    {
+      open_shutter = 1;
+ 688:	18 ce 00 01 	ldy	#1 <_start+0x1>
+ 68c:	18 ff 00 00 	sty	0 <_start>
+
+00000690 <.LM192>:
+      button_open_count++;
+    }
+
+    // If the shutter close button has been pressed, assert the shutter close flag.
+    if(button_close)
+ 690:	dd 00       	std	*0 <_start>
+ 692:	27 08       	beq	69c <.LM194>
+
+00000694 <.LM193>:
+    {
+      close_shutter = 1;
+ 694:	18 ce 00 01 	ldy	#1 <_start+0x1>
+ 698:	18 ff 00 00 	sty	0 <_start>
+
+0000069c <.LM194>:
+      button_close_count++;
+    }
+    
+    // If you push the "clear" button, then that means you want the counts to go back to zero.
+    if(button_clear)
+    {
+      button_open_count = 0;
+      button_close_count = 0;
+    }
+
+    // Display the buttons for diagnostic purposes.
+    sprintf(button_display,"b=%d,%d,%d,%d,%d,%d", button_open, button_close, open_shutter, close_shutter, shutter_opened, shutter_closed);
+ 69c:	18 fe 00 00 	ldy	0 <_start>
+ 6a0:	18 3c       	pshy
+ 6a2:	18 fe 00 00 	ldy	0 <_start>
+ 6a6:	18 3c       	pshy
+ 6a8:	18 fe 00 00 	ldy	0 <_start>
+ 6ac:	18 3c       	pshy
+ 6ae:	18 fe 00 00 	ldy	0 <_start>
+ 6b2:	18 3c       	pshy
+ 6b4:	37          	pshb
+ 6b5:	36          	psha
+ 6b6:	3c          	pshx
+ 6b7:	ce 00 00    	ldx	#0 <_start>
+ 6ba:	3c          	pshx
+ 6bb:	dc 00       	ldd	*0 <_start>
+ 6bd:	c3 00 01    	addd	#1 <_start+0x1>
+ 6c0:	bd 00 00    	jsr	0 <_start>
+
+000006c3 <.LM195>:
+    LCD_Command(LINE_4);               // goto lcd line 1
+ 6c3:	c6 d4       	ldab	#212
+ 6c5:	bd 00 00    	jsr	0 <_start>
+
+000006c8 <.LM196>:
+    LCDprint(button_display);
+ 6c8:	dc 00       	ldd	*0 <_start>
+ 6ca:	c3 00 01    	addd	#1 <_start+0x1>
+ 6cd:	bd 00 00    	jsr	0 <_start>
+
+000006d0 <.LM197>:
+ 6d0:	30          	tsx
+ 6d1:	c6 0e       	ldab	#14
+ 6d3:	3a          	abx
+ 6d4:	35          	txs
+
+000006d5 <.LBB31>:
+lock (void)
+{
+  unsigned short mask;
+
+  __asm__ __volatile__ ("tpa\n\tsei" : "=d"(mask));
+ 6d5:	07          	tpa
+ 6d6:	0f          	sei
+
+000006d7 <.LBE33>:
+ 6d7:	fc 00 02    	ldd	2 <_start+0x2>
+ 6da:	fe 00 00    	ldx	0 <_start>
+
+000006dd <.LBB35>:
+    @see lock, restore  */
+static __inline__ void
+unlock (void)
+{
+  __asm__ __volatile__ ("cli");
+ 6dd:	0e          	cli
+
+000006de <.LBE31>:
+
+    // Get current time and see if we must re-display it.
+    ntime = timer_get_ticks();
+    if(ntime != prev_time)
+ 6de:	9c 00       	cpx	*0 <_start>
+ 6e0:	26 08       	bne	6ea <.LM204>
+ 6e2:	1a 93 00    	cpd	*0 <_start>
+ 6e5:	26 03       	bne	6ea <.LM204>
+ 6e7:	7e 00 00    	jmp	0 <_start>
+
+000006ea <.LM204>:
+    {
+      prev_time = ntime;
+ 6ea:	dd 00       	std	*0 <_start>
+ 6ec:	df 00       	stx	*0 <_start>
+
+000006ee <.LM205>:
+      display_time(ntime);
+ 6ee:	bd 00 00    	jsr	0 <_start>
+
+000006f1 <.LBE29>:
+ 6f1:	7e 00 00    	jmp	0 <_start>

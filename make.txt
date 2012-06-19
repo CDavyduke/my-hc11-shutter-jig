@@ -1,7 +1,0 @@
-m6811-elf-gcc  -m68hc11 -mshort -Wall -Wmissing-prototypes -g -Os   -I. -Ic:/Gel/include/asm-m68hc11/arch-eeprom -Ic:/Gel/include   -c -o ShutterJig.o ShutterJig.c
-
-
-m6811-elf-gcc -m68hc11 -mshort -Wl,-m,m68hc11elfb -Lc:/Gel/config/m68hc11-eeprom -o ShutterJig.elf ShutterJig.o c:/Gel/lib/libc.a c:/Gel/lib/libbsp.a c:/Gel/lib/libc.a
-
-
-Makefile:24: recipe for target `ShutterJig.elf' failed

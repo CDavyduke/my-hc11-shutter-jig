@@ -25,7 +25,10 @@ CPPFLAGS=-I. -I./include
 CFLAGS=-m68hc11 -mshort -Wall -Wmissing-prototypes -g -Os
 
 # LDFLAGS used by default to link the program
-LDFLAGS=-m68hc11 -mshort -Wl,-m,m68hc11elfb -L.
+LDFLAGS=-m68hc11 -mshort -Wl,-m,m68hc11elfb -L. -nostartfiles \
+				-Wl,-defsym,_io_ports=0x1000 \
+				-Wl,-defsym,_.tmp=0x0 \
+				-Wl,-defsym,_.z=0x2
 
 # Options to creates the .s19 or .b files from the elf
 OBJCOPY_FLAGS=--only-section=.text --only-section=.rodata \

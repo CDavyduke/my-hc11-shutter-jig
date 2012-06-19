@@ -141,5 +141,5 @@ extern void serial_getline (char *buf);
 #ifdef __cplusplus
 };
 #endif
-#endif /* _SYS_SIO_H */
+#endif /* SIO_H */
 

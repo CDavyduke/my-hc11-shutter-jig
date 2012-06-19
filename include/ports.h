@@ -493,5 +493,5 @@ timer_initialize_rate (unsigned char divisor)
 };
 #endif
   
-#endif /* _SYS_PORTS_H */
+#endif /* PORTS_H */
 

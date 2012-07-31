@@ -1,7 +1,7 @@
 /*  Filename:       ShutterJig.c
     Author:         Corey Davyduke
     Created:        2012-06-14
-    Modified:       2012-06-18
+    Modified:       2012-07-31
     Compiler:       GNU GCC
     Description:    This project is based upon the "timer" project found
     under the Gel examples.  The HC11 uses the serial port to prompt the
@@ -67,8 +67,9 @@ unsigned short ButtonPressed(void);
 // To be called before main();
 void _start()
 {
-  asm ("lds #_stack");
-  set_bus_expanded ();
+	asm ("lds #_stack");
+//  _io_ports[M6811_OPTION] = 0x93;
+//  set_bus_expanded ();
   main ();
 }
 

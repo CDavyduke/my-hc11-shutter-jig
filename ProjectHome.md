@@ -1,0 +1,1 @@
+Open and close a shutter in response to pressing appropriate keys.
